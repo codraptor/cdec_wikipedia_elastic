@@ -104,6 +104,9 @@ public class WikiToElasticMain {
 
                 parser = new WikipediaSTAXParser(pageHandler, configuration, langConfiguration, mode);
                 parser.parse(inputStream);
+
+
+
             } else {
                 LOGGER.error("Cannot find dump file-" + wikifile.getAbsolutePath());
             }
@@ -121,6 +124,13 @@ public class WikiToElasticMain {
                 LOGGER.info("*** In commit queue=" + ((ElasticPageHandler) pageHandler).getPagesQueueSize() + " (should be 0)");
             }
             if(elasicApi != null) {
+
+                try {
+                    elasicApi.mapInlinks(elasicApi.getTotalIdsSuccessfullyCommitted());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
                 elasicApi.close();
                 LOGGER.info("*** Total id's committed=" + elasicApi.getTotalIdsSuccessfullyCommitted());
             }

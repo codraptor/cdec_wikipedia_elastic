@@ -1,11 +1,16 @@
 package wiki.data.relations;
 
+import lombok.Data;
+import lombok.Getter;
 import wiki.data.obj.BeCompRelationResult;
+import wiki.data.obj.ReferenceContext;
 import wiki.utils.LangConfiguration;
 import wiki.utils.WikiToElasticConfiguration;
 
 import java.util.List;
+import java.util.Set;
 
+@Getter
 public class ExtractorsManager {
 
     private static List<RelationType> relationTypes;
@@ -15,6 +20,7 @@ public class ExtractorsManager {
     private final LinkAndParenthesisRelationExtractor pairExtractor = new LinkAndParenthesisRelationExtractor();
     private final IRelationsExtractor<BeCompRelationResult> beCompExtractor = new BeCompRelationExtractor();
     private final IRelationsExtractor<String> infoboxExtrator = new InfoboxRelationExtractor();
+    private final IRelationsExtractor<Set<ReferenceContext>> outLinkExtractor = new OutLinkExtractor();
 
     public static void initExtractors(WikiToElasticConfiguration config, LangConfiguration langConfiguration) {
         relationTypes = config.getRelationTypes();
@@ -35,6 +41,8 @@ public class ExtractorsManager {
                 case Parenthesis:
                     LinkAndParenthesisRelationExtractor.initResources(langConfiguration);
                     break;
+                case OutLinks:
+                    break;
                 default:
                     throw new IllegalArgumentException("No such relation type-" + type.name());
             }
@@ -44,6 +52,9 @@ public class ExtractorsManager {
     public void runExtractFromPageText(String pageText) throws Exception {
         if(relationTypes.contains(RelationType.Infobox)) {
             this.infoboxExtrator.extract(pageText);
+        }
+        if(relationTypes.contains(RelationType.OutLinks)) {
+            outLinkExtractor.extract(pageText);
         }
     }
 
@@ -60,6 +71,7 @@ public class ExtractorsManager {
             if (relationTypes.contains(RelationType.Parenthesis)) {
                 pairExtractor.extract(line);
             }
+
         }
     }
 
@@ -67,25 +79,5 @@ public class ExtractorsManager {
         if(relationTypes.contains(RelationType.BeComp)) {
             this.beCompExtractor.extract(paragraph);
         }
-    }
-
-    public CategoryRelationExtractor getCategoryExtractor() {
-        return categoryExtractor;
-    }
-
-    public IRelationsExtractor<Boolean> getPartNameExtractor() {
-        return partNameExtractor;
-    }
-
-    public LinkAndParenthesisRelationExtractor getPairExtractor() {
-        return pairExtractor;
-    }
-
-    public IRelationsExtractor<BeCompRelationResult> getBeCompExtractor() {
-        return beCompExtractor;
-    }
-
-    public IRelationsExtractor<String> getInfoboxExtrator() {
-        return infoboxExtrator;
     }
 }

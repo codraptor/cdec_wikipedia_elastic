@@ -28,6 +28,11 @@ dependencies {
     compile 'org.elasticsearch.client:elasticsearch-rest-high-level-client:6.2.3'
     compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', version: '4.0.0'
     compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', classifier: 'models', version: '4.0.0'
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.22'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
 //    compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', classifier: 'models-spanish', version: '4.0.0'
 //    compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', classifier: 'models-german', version: '4.0.0'
 //    compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', classifier: 'models-french', version: '4.0.0'

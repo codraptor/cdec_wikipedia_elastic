@@ -3,6 +3,8 @@ package wiki.data;
 import wiki.data.relations.ExtractorsManager;
 import wiki.utils.parsers.WikiPageParser;
 
+import java.util.HashSet;
+
 public class WikipediaParsedPageRelationsBuilder {
     private boolean isPartName = false;
 
@@ -16,7 +18,9 @@ public class WikipediaParsedPageRelationsBuilder {
                 this.extractorsManager.getPairExtractor().getLinks(),
                 this.extractorsManager.getCategoryExtractor().getResult(),
                 this.extractorsManager.getPairExtractor().getTitleParenthesis(),
-                this.extractorsManager.getBeCompExtractor().getResult().getBeCompRelations());
+                this.extractorsManager.getBeCompExtractor().getResult().getBeCompRelations(),
+                this.extractorsManager.getOutLinkExtractor().getResult(),
+                new HashSet<>());
     }
 
     public WikipediaParsedPageRelations buildFromText(String pageText) throws Exception {

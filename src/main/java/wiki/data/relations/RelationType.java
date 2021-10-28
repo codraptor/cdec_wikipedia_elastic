@@ -5,5 +5,6 @@ public enum RelationType {
     Category,
     Infobox,
     Parenthesis,
-    PartName
+    PartName,
+    OutLinks
 }

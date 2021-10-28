@@ -4,6 +4,8 @@
 
 package wiki.data;
 
+import lombok.Setter;
+
 import java.util.Objects;
 
 public class WikipediaParsedPage {

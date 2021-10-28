@@ -5,6 +5,7 @@
 package wiki.elastic;
 
 import com.google.gson.Gson;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpHost;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,26 +17,33 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.open.OpenIndexRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.get.GetAction;
 import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import wiki.data.WikiDataParsedPage;
 import wiki.data.WikipediaParsedPage;
+import wiki.data.WikipediaParsedPageRelations;
+import wiki.data.obj.ReferenceContext;
 import wiki.utils.WikiToElasticConfiguration;
 
 import java.io.Closeable;
@@ -46,6 +54,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.elasticsearch.action.support.WriteRequest.RefreshPolicy.WAIT_UNTIL;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 
 public class ElasticAPI implements Closeable {
@@ -254,6 +263,121 @@ public class ElasticAPI implements Closeable {
         }
     }
 
+    public Set<ReferenceContext> getInlinks(String title) throws IOException {
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        sourceBuilder.query(QueryBuilders.matchPhraseQuery("title.near_match", title));
+
+        sourceBuilder.from(0);
+        sourceBuilder.size(1);
+        sourceBuilder.timeout(new TimeValue(5, TimeUnit.MINUTES));
+
+        SearchRequest searchRequest = new SearchRequest();
+        searchRequest.indices(this.indexName);
+        searchRequest.source(sourceBuilder);
+
+        SearchResponse child = this.client.search(searchRequest);
+
+        SearchHit[] childHits = child.getHits().getHits();
+        if (childHits != null && childHits.length > 0) {
+
+            WikipediaParsedPage childPage = getPageFromHit(childHits[0]);
+            return childPage.getRelations().getInLinks();
+
+        } else {
+            return null;
+        }
+
+    }
+
+    public void mapInlinks(int totalAmountToExtract) throws IOException, InterruptedException {
+
+        LOGGER.info("Reading all Wikipedia titles...");
+
+        long totalDocsCount = this.getTotalDocsCount();
+        final Scroll scroll = new Scroll(TimeValue.timeValueHours(15L));
+
+        SearchResponse searchResponse = createElasticSearchResponse(scroll);
+
+        String scrollId = searchResponse.getScrollId();
+        SearchHit[] searchHits = searchResponse.getHits().getHits();
+
+        int count = 0;
+        while (searchHits != null && searchHits.length > 0) {
+
+            SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
+            scrollRequest.scroll(scroll);
+
+            searchResponse = this.client.searchScroll(scrollRequest);
+            scrollId = searchResponse.getScrollId();
+
+            Map<String,WikipediaParsedPage> pageMap = this.getNextScrollResults(searchHits);
+
+            for(WikipediaParsedPage page: pageMap.values()){
+
+                Set<ReferenceContext> referenceContexts = page.getRelations().getReferenceContexts();
+                for(ReferenceContext referenceContext: referenceContexts){
+
+//                    if("100 metres".equals(referenceContext.getTitle())) {
+
+                        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+                        sourceBuilder.query(QueryBuilders.matchPhraseQuery("title.near_match", referenceContext.getTitle()));
+                        sourceBuilder.from(0);
+                        sourceBuilder.size(1);
+                        sourceBuilder.timeout(new TimeValue(5, TimeUnit.MINUTES));
+
+                        SearchRequest searchRequest = new SearchRequest();
+                        searchRequest.indices(this.indexName);
+                        searchRequest.source(sourceBuilder);
+
+                        SearchResponse child = this.client.search(searchRequest);
+                        SearchHit[] childHits = child.getHits().getHits();
+                        if (childHits != null && childHits.length > 0) {
+
+                            WikipediaParsedPage childPage = getPageFromHit(childHits[0]);
+                            Set<ReferenceContext> inlinks = childPage.getRelations().getInLinks();
+
+                            referenceContext.setTitle(page.getTitle());
+                            inlinks.add(referenceContext);
+
+                            UpdateRequest updateRequest = new UpdateRequest(
+                                    this.indexName,
+                                    this.docType,
+                                    String.valueOf(childPage.getId()));
+
+                            Map<String, WikipediaParsedPageRelations> wikipediaRelations = Collections.singletonMap("relations", childPage.getRelations());
+                            updateRequest.doc(GSON.toJson(wikipediaRelations), XContentType.JSON);
+
+                            //this.available.acquire();
+
+                            updateRequest.setRefreshPolicy(WriteRequest.RefreshPolicy.WAIT_UNTIL);
+                            UpdateResponse response = this.client.update(updateRequest);
+                            System.out.println(response.getGetResult());
+                            //this.available.release();
+
+                        }
+
+                    }
+
+//                }
+
+            }
+
+            if(count % 10000 == 0) {
+                LOGGER.info((totalDocsCount - count) + " documents to go");
+            }
+
+            if(totalAmountToExtract > 0 && count >= totalAmountToExtract) {
+                break;
+            }
+
+            count += searchHits.length;
+            searchHits = searchResponse.getHits().getHits();
+
+        }
+
+    }
+
     public Map<String, WikipediaParsedPage> readAllWikipediaIdsTitles(int totalAmountToExtract) throws IOException {
         LOGGER.info("Reading all Wikipedia titles...");
         Map<String, WikipediaParsedPage> allWikipediaIds = new HashMap<>();
@@ -288,18 +412,56 @@ public class ElasticAPI implements Closeable {
         return allWikipediaIds;
     }
 
+    private WikipediaParsedPage getPageFromHit(SearchHit hit){
+
+        final long id = Long.parseLong(hit.getId());
+
+        WikipediaParsedPage page = GSON.fromJson(hit.getSourceAsString(),WikipediaParsedPage.class);
+        return new WikipediaParsedPage(page.getTitle(),
+                id,page.getText(),page.getRedirectTitle(),page.getRelations());
+
+    }
+
     private Map<String, WikipediaParsedPage> getNextScrollResults(SearchHit[] searchHits) {
         Map<String, WikipediaParsedPage> wikiPairs = new HashMap<>();
         for (SearchHit hit : searchHits) {
             final long id = Long.parseLong(hit.getId());
-            final Map map = hit.getSourceAsMap();
-            final String title = (String) map.get("title");
-            String redirect = (String) map.get("redirectTitle");
-            if (redirect != null && !redirect.isEmpty()) {
-                wikiPairs.put(title, new WikipediaParsedPage(title, id, null, redirect, null));
-            } else {
-                wikiPairs.put(title, new WikipediaParsedPage(title, id, null, null, null));
-            }
+
+            WikipediaParsedPage page = GSON.fromJson(hit.getSourceAsString(),WikipediaParsedPage.class);
+            wikiPairs.put(page.getTitle(),new WikipediaParsedPage(page.getTitle(),
+                    id,page.getText(),page.getRedirectTitle(),page.getRelations()));
+
+//            final Map map = hit.get();
+//            final String title = (String) map.get("title");
+//            String redirect = (String) map.get("redirectTitle");
+//
+//            Gson gson = new Gson();
+//            String relJSON = gson.toJson(map.get("relations"));
+//
+//
+//            WikipediaParsedPageRelations rel =
+//
+//            Map relationMap = (HashMap)map.get("relations");
+//            String infobox = (String)relationMap.get("infobox");
+//            boolean isPartName = (boolean)relationMap.get("isPartName");
+//            boolean isDisambiguation = (boolean)relationMap.get("isDisambiguation");
+//            Set<String> disambiguationLinks = (Set<String>)relationMap.get("disambiguationLinks");
+//            Set<String> categories = new HashSet<>((ArrayList<String>)relationMap.get("categories"));
+//            Set<String> titleParenthesis = new HashSet<>((ArrayList<String>)relationMap.get("titleParenthesis"));
+//            Set<String> beCompRelations = new HashSet<>((ArrayList<String>)relationMap.get("beCompRelations"));
+//            Set<ReferenceContext> referenceContexts = new HashSet<>((ArrayList<ReferenceContext>)relationMap.get("referenceContexts"));
+//            Set<ReferenceContext> inLinks = new HashSet<>((ArrayList<ReferenceContext>)relationMap.get("inLinks"));
+//
+//            WikipediaParsedPageRelations relations = new WikipediaParsedPageRelations(infobox,isPartName,
+//                    isDisambiguation,
+//                    disambiguationLinks,categories,titleParenthesis,beCompRelations,
+//                    referenceContexts, inLinks);
+
+//            if (redirect != null && !redirect.isEmpty()) {
+//                wikiPairs.put(title, new WikipediaParsedPage(title, id, null, redirect, relations));
+//            } else {
+//                wikiPairs.put(title, new WikipediaParsedPage(title, id, null, null, relations));
+//            }
 
         }
 
