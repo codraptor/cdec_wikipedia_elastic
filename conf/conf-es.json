@@ -1,0 +1,23 @@
+{
+  "indexName": "test_es",
+  "docType": "wikipage",
+  "extractRelationFields": true,
+  "insertBulkSize": 100,
+  "mapping": "mapping.json",
+  "setting": "es_map_settings.json",
+  "host": "localhost",
+  "wikipediaDump": "dumps/data-es.bz2",
+  "port": 9200,
+  "scheme": "http",
+  "shards": 1,
+  "replicas": 0,
+  "lang": "es",
+  "includeRawText" : true,
+  "relationTypes": [
+    "Category",
+    "Infobox",
+    "Parenthesis",
+    "PartName",
+    "OutLinks"
+  ]
+}

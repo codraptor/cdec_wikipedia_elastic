@@ -1,0 +1,23 @@
+{
+  "indexName": "test_te",
+  "docType": "wikipage",
+  "extractRelationFields": true,
+  "insertBulkSize": 100,
+  "mapping": "mapping.json",
+  "setting": "te_map_settings.json",
+  "host": "localhost",
+  "wikipediaDump": "dumps/data-te.bz2",
+  "port": 9200,
+  "scheme": "http",
+  "shards": 1,
+  "replicas": 0,
+  "lang": "te",
+  "includeRawText" : true,
+  "relationTypes": [
+    "Category",
+    "Infobox",
+    "Parenthesis",
+    "PartName",
+    "OutLinks"
+  ]
+}
