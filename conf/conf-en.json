@@ -6,7 +6,7 @@
   "mapping": "mapping.json",
   "setting": "en_map_settings.json",
   "host": "localhost",
-  "wikipediaDump": "dumps/data-en.bz2",
+  "wikipediaDump": "dumps/data.bz2",
   "port": 9200,
   "scheme": "http",
   "shards": 1,

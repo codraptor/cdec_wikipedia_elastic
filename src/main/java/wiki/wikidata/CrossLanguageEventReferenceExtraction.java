@@ -36,13 +36,42 @@ public class CrossLanguageEventReferenceExtraction {
 
     }
 
+    private static void addEntry(JsonObject siteLinks, Gson gson, JsonObject result, String code) throws IOException {
+
+        JsonObject siteLink = siteLinks.getAsJsonObject(code + "wiki");
+
+        if(siteLink!=null && siteLink.get("title")!=null){
+
+            WikiToElasticConfiguration config = new Gson().fromJson(new FileReader("conf/conf-" + code +".json"), WikiToElasticConfiguration.class);
+
+            ElasticAPI elasticAPI = new ElasticAPI(config);
+
+            JsonObject language = new JsonObject();
+            language.addProperty("title",siteLink.get("title").getAsString());
+
+            Set<ReferenceContext> inlinks =
+                    elasticAPI.getInlinks(siteLink.get("title").getAsString());
+
+            if(CollectionUtils.isNotEmpty(inlinks)){
+                language.add("inlinks", gson.toJsonTree(inlinks));
+            }
+
+            result.add(code,language);
+
+            System.out.println(siteLink.get("title").getAsString());
+
+            elasticAPI.close();
+        }
+
+    }
+
     public static void main(String[] args) throws IOException {
 
         JsonReader reader = new JsonReader(new InputStreamReader(WikiToElasticUtils.
                 openCompressedFileInputStream("dumps/wikidata.bz2"), "UTF-8"));
 
         JsonWriter writer = new JsonWriter(new OutputStreamWriter(
-                new FileOutputStream(new File("results/wikidata.json")), "UTF-8"));
+                new FileOutputStream("results/wikidata.json"), "UTF-8"));
 
         writer.setIndent("  ");
         writer.beginArray();
@@ -59,153 +88,16 @@ public class CrossLanguageEventReferenceExtraction {
             JsonObject wikidata = entities.getAsJsonObject(wikidataId);
 
             JsonObject siteLinks = wikidata.getAsJsonObject("sitelinks");
-            JsonObject englishSiteLink = siteLinks.getAsJsonObject("enwiki");
-            JsonObject spanishSiteLink = siteLinks.getAsJsonObject("eswiki");
-            JsonObject japaneseSiteLink = siteLinks.getAsJsonObject("jawiki");
-            JsonObject chineseSiteLink = siteLinks.getAsJsonObject("zhwiki");
-            JsonObject teluguSiteLink = siteLinks.getAsJsonObject("tewiki");
-            JsonObject hindiSiteLink = siteLinks.getAsJsonObject("hiwiki");
 
             JsonObject result = new JsonObject();
             result.addProperty("key",wikidataId);
 
-            if(englishSiteLink!=null && englishSiteLink.get("title")!=null){
-
-                WikiToElasticConfiguration config = new Gson().fromJson(new FileReader("conf/conf-en.json"), WikiToElasticConfiguration.class);
-
-                ElasticAPI elasticAPI = new ElasticAPI(config);
-
-                JsonObject english = new JsonObject();
-                english.addProperty("title",englishSiteLink.get("title").getAsString());
-
-                Set<ReferenceContext> inlinks =
-                        elasticAPI.getInlinks(englishSiteLink.get("title").getAsString());
-
-                if(CollectionUtils.isNotEmpty(inlinks)){
-                    english.add("inlinks", gson.toJsonTree(inlinks));
-                }
-
-                result.add("en",english);
-
-                System.out.println(englishSiteLink.get("title").getAsString());
-
-                elasticAPI.close();
-            }
-
-            if(spanishSiteLink!=null && spanishSiteLink.get("title")!=null){
-
-                WikiToElasticConfiguration config = new Gson().fromJson(new FileReader("conf/conf-es.json"), WikiToElasticConfiguration.class);
-
-                ElasticAPI elasticAPI = new ElasticAPI(config);
-
-                JsonObject spanish = new JsonObject();
-                spanish.addProperty("title",spanishSiteLink.get("title").getAsString());
-
-                Set<ReferenceContext> inlinks =
-                        elasticAPI.getInlinks(spanishSiteLink.get("title").getAsString());
-
-                if(CollectionUtils.isNotEmpty(inlinks)){
-                    spanish.add("inlinks", gson.toJsonTree(inlinks));
-                }
-
-                result.add("es",spanish);
-
-                System.out.println(spanishSiteLink.get("title").getAsString());
-
-                elasticAPI.close();
-            }
-
-            if(japaneseSiteLink!=null && japaneseSiteLink.get("title")!=null){
-
-                WikiToElasticConfiguration config = new Gson().fromJson(new FileReader("conf/conf-ja.json"), WikiToElasticConfiguration.class);
-
-                ElasticAPI elasticAPI = new ElasticAPI(config);
-
-                JsonObject japanese = new JsonObject();
-                japanese.addProperty("title",japaneseSiteLink.get("title").getAsString());
-
-                Set<ReferenceContext> inlinks =
-                        elasticAPI.getInlinks(japaneseSiteLink.get("title").getAsString());
-
-                if(CollectionUtils.isNotEmpty(inlinks)){
-                    japanese.add("inlinks", gson.toJsonTree(inlinks));
-                }
-
-                result.add("ja",japanese);
-
-                System.out.println(japaneseSiteLink.get("title").getAsString());
-
-                elasticAPI.close();
-            }
-
-            if(chineseSiteLink!=null && chineseSiteLink.get("title")!=null){
-
-                WikiToElasticConfiguration config = new Gson().fromJson(new FileReader("conf/conf-zh.json"), WikiToElasticConfiguration.class);
-
-                ElasticAPI elasticAPI = new ElasticAPI(config);
-
-                JsonObject chinese = new JsonObject();
-                chinese.addProperty("title",chineseSiteLink.get("title").getAsString());
-
-                Set<ReferenceContext> inlinks =
-                        elasticAPI.getInlinks(chineseSiteLink.get("title").getAsString());
-
-                if(CollectionUtils.isNotEmpty(inlinks)){
-                    chinese.add("inlinks", gson.toJsonTree(inlinks));
-                }
-
-                result.add("zh",chinese);
-
-                System.out.println(chineseSiteLink.get("title").getAsString());
-
-                elasticAPI.close();
-            }
-
-            if(teluguSiteLink!=null && teluguSiteLink.get("title")!=null){
-
-                WikiToElasticConfiguration config = new Gson().fromJson(new FileReader("conf/conf-te.json"), WikiToElasticConfiguration.class);
-
-                ElasticAPI elasticAPI = new ElasticAPI(config);
-
-                JsonObject telugu = new JsonObject();
-                telugu.addProperty("title",teluguSiteLink.get("title").getAsString());
-
-                Set<ReferenceContext> inlinks =
-                        elasticAPI.getInlinks(teluguSiteLink.get("title").getAsString());
-
-                if(CollectionUtils.isNotEmpty(inlinks)){
-                    telugu.add("inlinks", gson.toJsonTree(inlinks));
-                }
-
-                result.add("te",telugu);
-
-                System.out.println(teluguSiteLink.get("title").getAsString());
-
-                elasticAPI.close();
-            }
-
-            if(hindiSiteLink!=null && hindiSiteLink.get("title")!=null){
-
-                WikiToElasticConfiguration config = new Gson().fromJson(new FileReader("conf/conf-hi.json"), WikiToElasticConfiguration.class);
-
-                ElasticAPI elasticAPI = new ElasticAPI(config);
-
-                JsonObject hindi = new JsonObject();
-                hindi.addProperty("title",hindiSiteLink.get("title").getAsString());
-
-                Set<ReferenceContext> inlinks =
-                        elasticAPI.getInlinks(hindiSiteLink.get("title").getAsString());
-
-                if(CollectionUtils.isNotEmpty(inlinks)){
-                    hindi.add("inlinks", gson.toJsonTree(inlinks));
-                }
-
-                result.add("hi",hindi);
-
-                System.out.println(hindiSiteLink.get("title").getAsString());
-
-                elasticAPI.close();
-            }
+            addEntry(siteLinks,gson,result,"en");
+            addEntry(siteLinks,gson,result,"es");
+            addEntry(siteLinks,gson,result,"ja");
+            addEntry(siteLinks,gson,result,"te");
+            addEntry(siteLinks,gson,result,"zh");
+            addEntry(siteLinks,gson,result,"hi");
 
             result.addProperty("event",isEvent(wikidata));
             gson.toJson(result, JsonObject.class, writer);

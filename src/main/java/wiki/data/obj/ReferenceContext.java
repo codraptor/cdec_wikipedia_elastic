@@ -14,7 +14,8 @@ public class ReferenceContext {
 
     String span;
     String title;
-    String context;
-    Integer offset;
+    Integer length;
+    //String context;
+    //Integer offset;
 
 }

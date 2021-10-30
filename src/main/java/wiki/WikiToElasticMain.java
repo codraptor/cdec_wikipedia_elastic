@@ -28,7 +28,7 @@ public class WikiToElasticMain {
     public static void main(String[] args) {
         try {
             LOGGER.info("Initiating all resources...");
-            WikiToElasticConfiguration config = GSON.fromJson(new FileReader("conf.json"), WikiToElasticConfiguration.class);
+            WikiToElasticConfiguration config = GSON.fromJson(new FileReader("conf/conf-en.json"), WikiToElasticConfiguration.class);
             InputStream inputStream = Objects.requireNonNull(WikiToElasticMain.class.getClassLoader().getResourceAsStream("lang/" + config.getLang() + ".json"));
             LangConfiguration langConfiguration = GSON.fromJson(new InputStreamReader(inputStream, StandardCharsets.UTF_8), LangConfiguration.class);
 

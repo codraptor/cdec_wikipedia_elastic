@@ -23,7 +23,7 @@ public class OutLinkExtractor implements IRelationsExtractor<Set<ReferenceContex
         for (String context : contexts) {
 
             Matcher matcher = REFERENCE_PATTERN.matcher(context);
-            Map<String,Integer> offsetMap = new HashMap<>();
+            //Map<String,Integer> offsetMap = new HashMap<>();
 
             while (matcher.find()) {
 
@@ -37,18 +37,19 @@ public class OutLinkExtractor implements IRelationsExtractor<Set<ReferenceContex
                         ReferenceContext referenceContext = new ReferenceContext();
                         referenceContext.setTitle(strings.get(0));
                         referenceContext.setSpan(strings.get(1));
+                        referenceContext.setLength(referenceContext.getSpan().length());
 
-                        int offset = -1;
-
-                        if(offsetMap.containsKey(strings.get(0))){
-                            offset = offsetMap.get(strings.get(0));
-                        }
-
-                        offset = context.indexOf(reference, offset+1);
-                        offsetMap.put(strings.get(0),offset);
-
-                        referenceContext.setContext(context);
-                        referenceContext.setOffset(offset);
+//                        int offset = -1;
+//
+//                        if(offsetMap.containsKey(strings.get(0))){
+//                            offset = offsetMap.get(strings.get(0));
+//                        }
+//
+//                        offset = context.indexOf(reference, offset+1);
+//                        offsetMap.put(strings.get(0),offset);
+//
+//                        referenceContext.setContext(context);
+//                        referenceContext.setOffset(offset);
 
                         this.referenceContexts.add(referenceContext);
 
@@ -58,18 +59,19 @@ public class OutLinkExtractor implements IRelationsExtractor<Set<ReferenceContex
                         ReferenceContext referenceContext = new ReferenceContext();
                         referenceContext.setTitle(strings.get(0));
                         referenceContext.setSpan(strings.get(0));
+                        referenceContext.setLength(referenceContext.getSpan().length());
 
-                        int offset = -1;
-
-                        if(offsetMap.containsKey(strings.get(0))){
-                            offset = offsetMap.get(strings.get(0));
-                        }
-
-                        offset = context.indexOf(reference, offset+1);
-                        offsetMap.put(strings.get(0),offset);
-
-                        referenceContext.setContext(context);
-                        referenceContext.setOffset(offset);
+//                        int offset = -1;
+//
+//                        if(offsetMap.containsKey(strings.get(0))){
+//                            offset = offsetMap.get(strings.get(0));
+//                        }
+//
+//                        offset = context.indexOf(reference, offset+1);
+//                        offsetMap.put(strings.get(0),offset);
+//
+//                        referenceContext.setContext(context);
+//                        referenceContext.setOffset(offset);
 
                         this.referenceContexts.add(referenceContext);
 
