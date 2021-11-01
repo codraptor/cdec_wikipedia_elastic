@@ -79,7 +79,8 @@ public class WikiToElasticMain {
                         "\" or update (new pages) in it [D(Delete)/U(Update)]");
 
                 // Scans the next token of the input as an int.
-                String ans = reader.nextLine();
+                //String ans = reader.nextLine();
+                String ans = "delete";
 
                 if(ans.equalsIgnoreCase("d") || ans.equalsIgnoreCase("delete")) {
                     elasicApi.deleteIndex();
