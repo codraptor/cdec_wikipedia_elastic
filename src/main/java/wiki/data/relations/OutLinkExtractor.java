@@ -37,7 +37,7 @@ public class OutLinkExtractor implements IRelationsExtractor<Set<ReferenceContex
                         ReferenceContext referenceContext = new ReferenceContext();
                         referenceContext.setTitle(strings.get(0));
                         referenceContext.setSpan(strings.get(1));
-                        referenceContext.setLength(referenceContext.getSpan().length());
+                        referenceContext.setLength((long)referenceContext.getSpan().length());
 
 //                        int offset = -1;
 //
@@ -59,7 +59,7 @@ public class OutLinkExtractor implements IRelationsExtractor<Set<ReferenceContex
                         ReferenceContext referenceContext = new ReferenceContext();
                         referenceContext.setTitle(strings.get(0));
                         referenceContext.setSpan(strings.get(0));
-                        referenceContext.setLength(referenceContext.getSpan().length());
+                        referenceContext.setLength((long)referenceContext.getSpan().length());
 
 //                        int offset = -1;
 //

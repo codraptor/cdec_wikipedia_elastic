@@ -1,10 +1,9 @@
 package wiki.data.obj;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,7 +13,8 @@ public class ReferenceContext {
 
     String span;
     String title;
-    Integer length;
+    Long length;
+    String source;
     //String context;
     //Integer offset;
 

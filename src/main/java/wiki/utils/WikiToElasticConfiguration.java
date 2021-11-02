@@ -1,30 +1,36 @@
 /**
- * @author  Alon Eirew
+ * @author Alon Eirew
  */
 
 package wiki.utils;
 
-import com.google.gson.reflect.TypeToken;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import wiki.data.relations.RelationType;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 
+@AllArgsConstructor
+@NoArgsConstructor
 public class WikiToElasticConfiguration {
 
     private String indexName;
     private String docType;
+    private String linkDocType;
     private String mapping;
+    private String linkMapping;
     private String setting;
     private String host;
     private String scheme;
     private String wikipediaDump;
     private String wikidataDump;
     private String wikidataJsonOutput;
+    private String linksIndexName;
     private int port;
     private int shards;
     private int replicas;
@@ -35,6 +41,7 @@ public class WikiToElasticConfiguration {
     private List<RelationType> relationTypes;
 
     private transient String mappingFileContent = null;
+    private transient String linkMappingFileContent = null;
     private transient String settingFileContent = null;
 
     public String getIndexName() {
@@ -53,12 +60,36 @@ public class WikiToElasticConfiguration {
         this.docType = docType;
     }
 
+    public String getLinkDocType() {
+        return linkDocType;
+    }
+
+    public void setLinkDocType(String linkDocType) {
+        this.linkDocType = linkDocType;
+    }
+
     public String getMapping() {
         return mapping;
     }
 
     public void setMapping(String mapping) {
         this.mapping = mapping;
+    }
+
+    public String getSetting() {
+        return setting;
+    }
+
+    public void setSetting(String setting) {
+        this.setting = setting;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
     }
 
     public String getScheme() {
@@ -69,12 +100,36 @@ public class WikiToElasticConfiguration {
         this.scheme = scheme;
     }
 
-    public String getHost() {
-        return host;
+    public String getWikipediaDump() {
+        return wikipediaDump;
     }
 
-    public void setHost(String host) {
-        this.host = host;
+    public void setWikipediaDump(String wikipediaDump) {
+        this.wikipediaDump = wikipediaDump;
+    }
+
+    public String getWikidataDump() {
+        return wikidataDump;
+    }
+
+    public void setWikidataDump(String wikidataDump) {
+        this.wikidataDump = wikidataDump;
+    }
+
+    public String getWikidataJsonOutput() {
+        return wikidataJsonOutput;
+    }
+
+    public void setWikidataJsonOutput(String wikidataJsonOutput) {
+        this.wikidataJsonOutput = wikidataJsonOutput;
+    }
+
+    public String getLinksIndexName() {
+        return linksIndexName;
+    }
+
+    public void setLinksIndexName(String linksIndexName) {
+        this.linksIndexName = linksIndexName;
     }
 
     public int getPort() {
@@ -101,22 +156,6 @@ public class WikiToElasticConfiguration {
         this.replicas = replicas;
     }
 
-    public String getWikipediaDump() {
-        return wikipediaDump;
-    }
-
-    public void setWikipediaDump(String wikipediaDump) {
-        this.wikipediaDump = wikipediaDump;
-    }
-
-    public String getSetting() {
-        return setting;
-    }
-
-    public void setSetting(String setting) {
-        this.setting = setting;
-    }
-
     public int getInsertBulkSize() {
         return insertBulkSize;
     }
@@ -131,30 +170,6 @@ public class WikiToElasticConfiguration {
 
     public void setExtractRelationFields(boolean extractRelationFields) {
         this.extractRelationFields = extractRelationFields;
-    }
-
-    public List<RelationType> getRelationTypes() {
-        return relationTypes;
-    }
-
-    public void setRelationTypes(List<RelationType> relationTypes) {
-        this.relationTypes = relationTypes;
-    }
-
-    public String getMappingFileContent() throws IOException {
-        if(this.mappingFileContent == null && this.mapping != null) {
-            this.mappingFileContent = IOUtils.toString(Objects.requireNonNull(
-                    WikiToElasticUtils.class.getClassLoader().getResourceAsStream(this.mapping)), StandardCharsets.UTF_8);
-        }
-        return this.mappingFileContent;
-    }
-
-    public String getSettingFileContent() throws IOException {
-        if(this.settingFileContent == null && this.setting != null) {
-            this.settingFileContent = IOUtils.toString(Objects.requireNonNull(
-                            WikiToElasticUtils.class.getClassLoader().getResourceAsStream(this.setting)), StandardCharsets.UTF_8);
-        }
-        return this.settingFileContent;
     }
 
     public String getLang() {
@@ -173,19 +188,39 @@ public class WikiToElasticConfiguration {
         this.includeRawText = includeRawText;
     }
 
-    public String getWikidataDump() {
-        return wikidataDump;
+    public List<RelationType> getRelationTypes() {
+        return relationTypes;
     }
 
-    public void setWikidataDump(String wikidataDump) {
-        this.wikidataDump = wikidataDump;
+    public void setRelationTypes(List<RelationType> relationTypes) {
+        this.relationTypes = relationTypes;
     }
 
-    public String getWikidataJsonOutput() {
-        return wikidataJsonOutput;
+    public void setSettingFileContent(String settingFileContent) {
+        this.settingFileContent = settingFileContent;
     }
 
-    public void setWikidataJsonOutput(String wikidataJsonOutput) {
-        this.wikidataJsonOutput = wikidataJsonOutput;
+    public String getLinkMappingFileContent() throws IOException {
+        if (this.linkMappingFileContent == null && this.linkMapping != null) {
+            this.linkMappingFileContent = IOUtils.toString(Objects.requireNonNull(
+                    WikiToElasticUtils.class.getClassLoader().getResourceAsStream(this.linkMapping)), StandardCharsets.UTF_8);
+        }
+        return this.linkMappingFileContent;
+    }
+
+    public String getMappingFileContent() throws IOException {
+        if (this.mappingFileContent == null && this.mapping != null) {
+            this.mappingFileContent = IOUtils.toString(Objects.requireNonNull(
+                    WikiToElasticUtils.class.getClassLoader().getResourceAsStream(this.mapping)), StandardCharsets.UTF_8);
+        }
+        return this.mappingFileContent;
+    }
+
+    public String getSettingFileContent() throws IOException {
+        if (this.settingFileContent == null && this.setting != null) {
+            this.settingFileContent = IOUtils.toString(Objects.requireNonNull(
+                    WikiToElasticUtils.class.getClassLoader().getResourceAsStream(this.setting)), StandardCharsets.UTF_8);
+        }
+        return this.settingFileContent;
     }
 }

@@ -126,11 +126,11 @@ public class WikiToElasticMain {
             }
             if(elasicApi != null) {
 
-                try {
-                    elasicApi.mapInlinks(elasicApi.getTotalIdsSuccessfullyCommitted());
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    elasicApi.mapInlinks(elasicApi.getTotalIdsSuccessfullyCommitted());
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
 
                 elasicApi.close();
                 LOGGER.info("*** Total id's committed=" + elasicApi.getTotalIdsSuccessfullyCommitted());
