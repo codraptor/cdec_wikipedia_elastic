@@ -27,6 +27,8 @@ public class ElasticBulkLinkCreateListener implements ActionListener<BulkRespons
 
     @Override
     public void onResponse(BulkResponse bulkResponse) {
+        elasicApi.onLinksSuccess(bulkResponse.getItems().length);
+        int noops = 0;
 
         StringBuilder sb = new StringBuilder();
         sb.append("Bulk Created/Updated done successfully, ids: [");
@@ -42,10 +44,14 @@ public class ElasticBulkLinkCreateListener implements ActionListener<BulkRespons
                 } else if (itemResponse.getResult() == DocWriteResponse.Result.UPDATED) {
                     sb.append(id).append(";");
                 }
+                else if(itemResponse.getResult() == DocWriteResponse.Result.NOOP) {
+                    noops ++;
+                }
             }
         }
         sb.append("]");
 
+        this.elasicApi.updateNOOPSLinks(noops);
         LOGGER.debug(sb.toString());
     }
 
@@ -56,9 +62,12 @@ public class ElasticBulkLinkCreateListener implements ActionListener<BulkRespons
         if (count.incrementAndGet() < MAX_RETRY) {
             this.elasicApi.retryAddLinksBulk(this.bulkRequest, this);
         } else {
+            this.elasicApi.onFailLinks(bulkRequest.requests().size());
             LOGGER.error("Failed, max retry exceeded, throwing request!");
         }
 
     }
+
+
 
 }

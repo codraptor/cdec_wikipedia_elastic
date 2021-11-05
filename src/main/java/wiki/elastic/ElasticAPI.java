@@ -5,8 +5,6 @@
 package wiki.elastic;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpHost;
 import org.apache.logging.log4j.LogManager;
@@ -58,15 +56,21 @@ public class ElasticAPI implements Closeable {
 
     private final static Logger LOGGER = LogManager.getLogger(ElasticAPI.class);
     private static final Gson GSON = new Gson();
-    private final static int MAX_AVAILABLE = 10;
+    private final static int MAX_AVAILABLE = 30;
 
     private final AtomicInteger totalIdsProcessed = new AtomicInteger(0);
     private final AtomicInteger totalIdsSuccessfullyCommitted = new AtomicInteger(0);
+
+    private final AtomicInteger totalLinksProcessed = new AtomicInteger(0);
+    private final AtomicInteger totalLinksSuccessfullyCommitted = new AtomicInteger(0);
 
     // Limit the number of threads accessing elastic in parallel
     private final Semaphore available = new Semaphore(MAX_AVAILABLE, true);
     private final RestHighLevelClient client;
     private final Object closeLock = new Object();
+
+    private final Semaphore linksAvailable = new Semaphore(MAX_AVAILABLE, true);
+    private final Object closeLockLinks = new Object();
 
     private final String indexName;
     private final String linksIndexName;
@@ -152,7 +156,7 @@ public class ElasticAPI implements Closeable {
             String mappingFileContent = configuration.getMappingFileContent();
             String linkMappingFileContent = configuration.getLinkMappingFileContent();
 
-            if (mappingFileContent != null && !mappingFileContent.isEmpty() && linkMappingFileContent!=null && !linkMappingFileContent.isEmpty()) {
+            if (mappingFileContent != null && !mappingFileContent.isEmpty() && linkMappingFileContent != null && !linkMappingFileContent.isEmpty()) {
 
                 crRequest.mapping(configuration.getDocType(), mappingFileContent, XContentType.JSON);
                 createLinksRequest.mapping(configuration.getLinkDocType(), linkMappingFileContent, XContentType.JSON);
@@ -172,6 +176,15 @@ public class ElasticAPI implements Closeable {
 
     }
 
+    public synchronized void onLinksSuccess(int successCount){
+        this.linksAvailable.release();
+        this.totalLinksSuccessfullyCommitted.addAndGet(successCount);
+        this.totalLinksProcessed.addAndGet(-successCount);
+        synchronized (closeLockLinks) {
+            closeLockLinks.notify();
+        }
+    }
+
     public synchronized void onSuccess(int successCount) {
         this.available.release();
         this.totalIdsSuccessfullyCommitted.addAndGet(successCount);
@@ -186,11 +199,23 @@ public class ElasticAPI implements Closeable {
         this.totalIdsSuccessfullyCommitted.addAndGet(-noops);
     }
 
+    public void updateNOOPSLinks(int noops){
+        this.totalLinksSuccessfullyCommitted.addAndGet(-noops);
+    }
+
     public synchronized void onFail(int failedCount) {
         this.available.release();
         this.totalIdsProcessed.addAndGet(-failedCount);
         synchronized (closeLock) {
             closeLock.notify();
+        }
+    }
+
+    public synchronized void onFailLinks(int failedCount) {
+        this.linksAvailable.release();
+        this.totalLinksProcessed.addAndGet(-failedCount);
+        synchronized (closeLockLinks) {
+            closeLockLinks.notify();
         }
     }
 
@@ -205,7 +230,10 @@ public class ElasticAPI implements Closeable {
 
                 if (linkIndexRequests != null) {
                     for (IndexRequest linkIndexRequest : linkIndexRequests) {
+                        this.linksAvailable.acquire();
                         this.client.index(linkIndexRequest);
+                        this.linksAvailable.release();
+                        this.totalLinksSuccessfullyCommitted.incrementAndGet();
                     }
                 }
                 res = this.client.index(indexRequest);
@@ -245,6 +273,7 @@ public class ElasticAPI implements Closeable {
         try {
             // release will happen from listener (async)
             this.available.acquire();
+            this.linksAvailable.acquire();
 
             ElasticBulkDocCreateListener listener = new ElasticBulkDocCreateListener(bulkRequest, this);
             ElasticBulkLinkCreateListener linkListener = new ElasticBulkLinkCreateListener(bulkLinkRequest, this);
@@ -253,6 +282,7 @@ public class ElasticAPI implements Closeable {
             this.client.bulkAsync(bulkLinkRequest, linkListener);
 
             this.totalIdsProcessed.addAndGet(bulkRequest.numberOfActions());
+            this.totalLinksProcessed.addAndGet(bulkLinkRequest.numberOfActions());
 
             LOGGER.debug("Bulk insert will be created asynchronously");
         } catch (InterruptedException e) {
@@ -383,8 +413,8 @@ public class ElasticAPI implements Closeable {
     public void retryAddLinksBulk(BulkRequest bulkRequest, ElasticBulkLinkCreateListener listener) {
         try {
             // Release to give chance for other threads that waiting to execute
-            this.available.release();
-            this.available.acquire();
+            this.linksAvailable.release();
+            this.linksAvailable.acquire();
             this.client.bulkAsync(bulkRequest, listener);
             LOGGER.debug("Bulk insert retry");
         } catch (InterruptedException e) {
@@ -477,8 +507,19 @@ public class ElasticAPI implements Closeable {
                         LOGGER.info("Waiting for " + this.totalIdsProcessed.get() + " async requests to complete...");
                         closeLock.wait();
                     }
-                    client.close();
+
+                    synchronized (closeLockLinks){
+                        while(this.totalLinksProcessed.get() !=0 ){
+                            LOGGER.info("Waiting for " + this.totalLinksProcessed.get() + " async link requests to complete...");
+                            closeLockLinks.wait();
+                        }
+
+                        client.close();
+
+                    }
                 }
+
+
             } catch (InterruptedException e) {
                 client.close();
             }
