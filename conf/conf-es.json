@@ -1,9 +1,12 @@
 {
   "indexName": "test_es",
+  "linksIndexName" : "test_es_links",
   "docType": "wikipage",
+  "linkDocType" : "link",
   "extractRelationFields": true,
   "insertBulkSize": 100,
   "mapping": "mapping.json",
+  "linkMapping" : "link_mapping.json",
   "setting": "es_map_settings.json",
   "host": "localhost",
   "wikipediaDump": "dumps/data-es.bz2",
