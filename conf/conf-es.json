@@ -5,7 +5,7 @@
   "linkDocType" : "link",
   "extractRelationFields": true,
   "insertBulkSize": 100,
-  "mapping": "mapping.json",
+  "mapping": "page_mapping.json",
   "linkMapping" : "link_mapping.json",
   "setting": "es_map_settings.json",
   "host": "localhost",
