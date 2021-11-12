@@ -56,7 +56,7 @@ public class ElasticAPI implements Closeable {
 
     private final static Logger LOGGER = LogManager.getLogger(ElasticAPI.class);
     private static final Gson GSON = new Gson();
-    private final static int MAX_AVAILABLE = 30;
+    private final static int MAX_AVAILABLE = 5;
 
     private final AtomicInteger totalIdsProcessed = new AtomicInteger(0);
     private final AtomicInteger totalIdsSuccessfullyCommitted = new AtomicInteger(0);
