@@ -9,7 +9,7 @@
   "linkMapping" : "link_mapping.json",
   "setting": "es_map_settings.json",
   "host": "localhost",
-  "wikipediaDump": "dumps/data-es.bz2",
+  "wikipediaDump": "dumps/eswiki-20210901-pages-articles-multistream.xml.bz2",
   "port": 9200,
   "scheme": "http",
   "shards": 1,

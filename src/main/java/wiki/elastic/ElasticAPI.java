@@ -95,7 +95,10 @@ public class ElasticAPI implements Closeable {
                 RestClient.builder(
                         new HttpHost(configuration.getHost(),
                                 configuration.getPort(),
-                                configuration.getScheme())));
+                                configuration.getScheme())).setRequestConfigCallback(
+                                        requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(1000000)
+
+                ));
     }
 
     public void deleteIndex() throws ConnectException {
@@ -145,12 +148,19 @@ public class ElasticAPI implements Closeable {
                     .put("index.number_of_shards", configuration.getShards())
                     .put("index.number_of_replicas", configuration.getReplicas());
 
+            Settings.Builder linksBuilder = Settings.builder();
+            linksBuilder
+                    .put("index.number_of_shards", configuration.getShards()*4)
+                    .put("index.number_of_replicas", configuration.getReplicas());
+
             String settingFileContent = configuration.getSettingFileContent();
             if (settingFileContent != null && !settingFileContent.isEmpty()) {
                 builder.loadFromSource(settingFileContent, XContentType.JSON);
+                linksBuilder.loadFromSource(settingFileContent, XContentType.JSON);
             }
+
             crRequest.settings(builder);
-            createLinksRequest.settings(builder);
+            createLinksRequest.settings(linksBuilder);
 
             // Create index mapping
             String mappingFileContent = configuration.getMappingFileContent();
@@ -251,6 +261,9 @@ public class ElasticAPI implements Closeable {
 
         BulkRequest bulkRequest = new BulkRequest();
         BulkRequest bulkLinkRequest = new BulkRequest();
+
+        bulkLinkRequest.timeout("100m");
+        bulkRequest.timeout("10m");
 
         if (pages != null) {
             for (WikipediaParsedPage page : pages) {
