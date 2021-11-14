@@ -1,7 +1,7 @@
 {
   "indexName": "clusters",
   "docType": "cluster",
-  "insertBulkSize": 10,
+  "insertBulkSize": 1,
   "mapping": "cluster_mapping.json",
   "setting": "es_map_settings.json",
   "host": "localhost",
