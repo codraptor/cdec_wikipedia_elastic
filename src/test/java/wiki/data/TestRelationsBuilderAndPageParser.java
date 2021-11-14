@@ -3,7 +3,7 @@ package wiki.data;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import wiki.TestUtils;
-import wiki.WikiToElasticMain;
+import wiki.WikiToElasticMainBackup;
 import wiki.data.obj.BeCompRelationResult;
 import wiki.data.relations.BeCompRelationExtractor;
 import wiki.data.relations.ExtractorsManager;
@@ -24,9 +24,9 @@ public class TestRelationsBuilderAndPageParser {
 
     @BeforeAll
     public static void initTests() throws FileNotFoundException {
-        String testConfig = Objects.requireNonNull(WikiToElasticMain.class.getClassLoader().getResource("test_config.json")).getFile();
+        String testConfig = Objects.requireNonNull(WikiToElasticMainBackup.class.getClassLoader().getResource("test_config.json")).getFile();
         WikiToElasticConfiguration config = TestUtils.GSON.fromJson(new FileReader(testConfig), WikiToElasticConfiguration.class);
-        String langConfigFile = Objects.requireNonNull(WikiToElasticMain.class.getClassLoader().getResource("lang/" + config.getLang() + ".json")).getFile();
+        String langConfigFile = Objects.requireNonNull(WikiToElasticMainBackup.class.getClassLoader().getResource("lang/" + config.getLang() + ".json")).getFile();
         LangConfiguration langConfiguration = TestUtils.GSON.fromJson(new FileReader(langConfigFile), LangConfiguration.class);
 
         ExtractorsManager.initExtractors(config, langConfiguration);

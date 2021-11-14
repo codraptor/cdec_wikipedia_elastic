@@ -48,7 +48,7 @@ public class TestUtils {
     }
 
     public static LangConfiguration getLangConfig(String lang) throws FileNotFoundException {
-        String langConfigFile = Objects.requireNonNull(WikiToElasticMain.class.getClassLoader().getResource("lang/" + lang + ".json")).getFile();
+        String langConfigFile = Objects.requireNonNull(WikiToElasticMainBackup.class.getClassLoader().getResource("lang/" + lang + ".json")).getFile();
         return GSON.fromJson(new FileReader(langConfigFile), LangConfiguration.class);
     }
 

@@ -1,0 +1,13 @@
+{
+  "indexName": "clusters",
+  "docType": "cluster",
+  "insertBulkSize": 10,
+  "mapping": "cluster_mapping.json",
+  "setting": "es_map_settings.json",
+  "host": "localhost",
+  "dataSource": "data/xlec-v0.json",
+  "port": 9200,
+  "scheme": "http",
+  "shards": 1,
+  "replicas": 0
+}

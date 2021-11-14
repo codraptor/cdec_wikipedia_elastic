@@ -3,8 +3,7 @@ package wiki.frequency;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.Test;
 import wiki.TestUtils;
-import wiki.WikiToElasticMain;
-import wiki.utils.LangConfiguration;
+import wiki.WikiToElasticMainBackup;
 import wiki.utils.WikiToElasticConfiguration;
 
 import java.io.FileNotFoundException;
@@ -16,7 +15,7 @@ public class TestWordFrequencyAndRep {
 
     @Test
     public void testCountLineFrequency() throws FileNotFoundException {
-        String testConfig = Objects.requireNonNull(WikiToElasticMain.class.getClassLoader().getResource("test_config.json")).getFile();
+        String testConfig = Objects.requireNonNull(WikiToElasticMainBackup.class.getClassLoader().getResource("test_config.json")).getFile();
         WikiToElasticConfiguration config = GSON.fromJson(new FileReader(testConfig), WikiToElasticConfiguration.class);
 
         WordFrequencyAndRepresentation.initResources(config.getLang());
