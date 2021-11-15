@@ -203,6 +203,9 @@ public class IndexingAPI implements Closeable {
         } catch (IOException | InterruptedException e) {
 
             e.printStackTrace();
+        } catch ( Exception e) {
+
+            e.printStackTrace();
         }
 
         return res;
@@ -215,6 +218,7 @@ public class IndexingAPI implements Closeable {
 
 //        bulkLinkRequest.timeout("100m");
         bulkRequest.timeout("10m");
+        System.out.println(bulkRequest.estimatedSizeInBytes());
 
         if (CollectionUtils.isNotEmpty(clusters)) {
             for (Cluster cluster : clusters) {
