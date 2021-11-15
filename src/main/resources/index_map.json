@@ -315,9 +315,9 @@
               "inlinks": {
                 "type": "nested"
               }
-            
+            }
 
-        }
+
       ]}
   }
 }
