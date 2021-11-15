@@ -89,10 +89,12 @@ public class IndexingAPI implements Closeable {
                 RestClient.builder(
                         new HttpHost(configuration.getHost(),
                                 configuration.getPort(),
-                                configuration.getScheme())).setRequestConfigCallback(
-                                        requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(1000000)
+                                configuration.getScheme()))
+                        //.setRequestConfigCallback(
+                        //                requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(1000000)
 
-                ));
+    //            )
+    );
     }
 
     public void deleteIndex() throws ConnectException {
@@ -199,6 +201,7 @@ public class IndexingAPI implements Closeable {
                 this.totalIdsSuccessfullyCommitted.incrementAndGet();
             }
         } catch (IOException | InterruptedException e) {
+
             e.printStackTrace();
         }
 
@@ -208,10 +211,10 @@ public class IndexingAPI implements Closeable {
     public void addBulkAsnc(List<Cluster> clusters) {
 
         BulkRequest bulkRequest = new BulkRequest();
-        BulkRequest bulkLinkRequest = new BulkRequest();
+     //   BulkRequest bulkLinkRequest = new BulkRequest();
 
-        bulkLinkRequest.timeout("100m");
-        bulkRequest.timeout("10m");
+//        bulkLinkRequest.timeout("100m");
+//        bulkRequest.timeout("10m");
 
         if (CollectionUtils.isNotEmpty(clusters)) {
             for (Cluster cluster : clusters) {
@@ -223,12 +226,12 @@ public class IndexingAPI implements Closeable {
                 }
             }
 
-            commitBulk(bulkRequest, bulkLinkRequest);
+            commitBulk(bulkRequest);
         }
 
     }
 
-    private void commitBulk(BulkRequest bulkRequest, BulkRequest bulkLinkRequest) {
+    private void commitBulk(BulkRequest bulkRequest) {
         try {
 
             // release will happen from listener (async)
@@ -246,30 +249,6 @@ public class IndexingAPI implements Closeable {
         }
     }
 
-    private WikipediaParsedPage getPageFromHit(SearchHit hit) {
-
-        final long id = Long.parseLong(hit.getId());
-
-        WikipediaParsedPage page = GSON.fromJson(hit.getSourceAsString(), WikipediaParsedPage.class);
-        return new WikipediaParsedPage(page.getTitle(),
-                id, page.getText(), page.getRedirectTitle(), page.getRelations());
-
-    }
-
-    private Map<String, WikipediaParsedPage> getNextScrollResults(SearchHit[] searchHits) {
-        Map<String, WikipediaParsedPage> wikiPairs = new HashMap<>();
-        for (SearchHit hit : searchHits) {
-            final long id = Long.parseLong(hit.getId());
-
-            WikipediaParsedPage page = GSON.fromJson(hit.getSourceAsString(), WikipediaParsedPage.class);
-            wikiPairs.put(page.getTitle(), new WikipediaParsedPage(page.getTitle(),
-                    id, page.getText(), page.getRedirectTitle(), page.getRelations()));
-
-        }
-
-        return wikiPairs;
-    }
-
     public long getTotalDocsCount() throws IOException {
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
@@ -282,16 +261,6 @@ public class IndexingAPI implements Closeable {
         final SearchResponse search = this.client.search(searchRequest);
         return search.getHits().getTotalHits();
 
-    }
-
-    private SearchResponse createElasticSearchResponse(Scroll scroll) throws IOException {
-        final SearchRequest searchRequest = new SearchRequest(this.indexName);
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(matchAllQuery());
-        searchSourceBuilder.size(1000);
-        searchRequest.source(searchSourceBuilder);
-        searchRequest.scroll(scroll);
-        return this.client.search(searchRequest);
     }
 
     public void retryAddBulk(BulkRequest bulkRequest, ElasticBulkClusterCreateListener listener) {
@@ -329,17 +298,6 @@ public class IndexingAPI implements Closeable {
         return false;
     }
 
-    public boolean isIndexExists() {
-        boolean ret = false;
-        try {
-            OpenIndexRequest openIndexRequest = new OpenIndexRequest(this.indexName);
-            ret = client.indices().open(openIndexRequest).isAcknowledged();
-        } catch (ElasticsearchStatusException | IOException ignored) {
-        }
-
-        return ret;
-    }
-
     public int getTotalIdsProcessed() {
         return totalIdsProcessed.get();
     }
@@ -368,11 +326,13 @@ public class IndexingAPI implements Closeable {
 
     @Override
     public void close() throws IOException {
+
         if (client != null) {
 
             log.info("Closing RestHighLevelClient..");
             try {
                 synchronized (closeLock) {
+
                     while (this.totalIdsProcessed.get() != 0) {
                         log.info("Waiting for " + this.totalIdsProcessed.get() + " async requests to complete...");
                         closeLock.wait();
@@ -380,7 +340,6 @@ public class IndexingAPI implements Closeable {
 
                     client.close();
                 }
-
 
             } catch (InterruptedException e) {
                 client.close();
