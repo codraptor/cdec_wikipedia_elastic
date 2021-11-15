@@ -261,6 +261,7 @@
     "_default_": {
       "dynamic_templates": [
         {
+          "cluster": {
               "node": {
                 "type": "text",
                 "similarity": "BM25",
@@ -316,8 +317,8 @@
                 "type": "nested"
               }
             }
-
-
+          
+        }
       ]}
   }
 }
