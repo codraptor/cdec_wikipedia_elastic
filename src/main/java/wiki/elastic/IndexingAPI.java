@@ -45,6 +45,7 @@ import wiki.utils.WikiToElasticConfiguration;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -195,6 +196,8 @@ public class IndexingAPI implements Closeable {
             if (isValidRequest(page)) {
 
                 IndexRequest indexRequest = createIndexRequest(page);
+                indexRequest.timeout("10m");
+
                 this.available.acquire();
                 res = this.client.index(indexRequest);
                 this.available.release();
@@ -317,9 +320,10 @@ public class IndexingAPI implements Closeable {
                 this.docType,
                 cluster.getNode());
 
-        System.out.println(cluster.getInlinks().size());
+        String data = GSON.toJson(cluster);
+        System.out.println(data.getBytes(StandardCharsets.UTF_8).length);
 
-        indexRequest.source(GSON.toJson(cluster), XContentType.JSON);
+        indexRequest.source(data, XContentType.JSON);
 
         return indexRequest;
     }
