@@ -313,6 +313,8 @@ public class IndexingAPI implements Closeable {
                 this.docType,
                 cluster.getNode());
 
+        System.out.println(cluster.getInlinks().size());
+
         indexRequest.source(GSON.toJson(cluster), XContentType.JSON);
 
         return indexRequest;
