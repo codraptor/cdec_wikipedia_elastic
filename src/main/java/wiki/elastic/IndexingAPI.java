@@ -90,10 +90,10 @@ public class IndexingAPI implements Closeable {
                         new HttpHost(configuration.getHost(),
                                 configuration.getPort(),
                                 configuration.getScheme()))
-                        //.setRequestConfigCallback(
-                        //                requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(1000000)
+                        .setRequestConfigCallback(
+                                     requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(1000000)
 
-    //            )
+                )
     );
     }
 
@@ -214,7 +214,7 @@ public class IndexingAPI implements Closeable {
      //   BulkRequest bulkLinkRequest = new BulkRequest();
 
 //        bulkLinkRequest.timeout("100m");
-//        bulkRequest.timeout("10m");
+        bulkRequest.timeout("10m");
 
         if (CollectionUtils.isNotEmpty(clusters)) {
             for (Cluster cluster : clusters) {
