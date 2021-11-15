@@ -43,10 +43,11 @@ public class IndexingPageHandler {
     public void addCluster(Cluster cluster) {
         synchronized (this.lock) {
             if (cluster != null) {
-                clusters.add(cluster);
-                if (this.clusters.size() == this.bulkSize) {
-                    flush();
-                }
+                indexingAPI.addCluster(cluster);
+                //clusters.add(cluster);
+                //if (this.clusters.size() == this.bulkSize) {
+                //    flush();
+                //}
             }
         }
     }
