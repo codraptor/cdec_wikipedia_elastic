@@ -203,12 +203,8 @@ public class IndexingAPI implements Closeable {
                 this.available.release();
                 this.totalIdsSuccessfullyCommitted.incrementAndGet();
             }
-        } catch (IOException | InterruptedException e) {
-
-            e.printStackTrace();
         } catch ( Exception e) {
-
-            e.printStackTrace();
+            System.out.println("failed: " + page.getNode());
         }
 
         return res;
@@ -320,10 +316,7 @@ public class IndexingAPI implements Closeable {
                 this.docType,
                 cluster.getNode());
 
-        String data = GSON.toJson(cluster);
-        System.out.println(data.getBytes(StandardCharsets.UTF_8).length);
-
-        indexRequest.source(data, XContentType.JSON);
+        indexRequest.source(GSON.toJson(cluster), XContentType.JSON);
 
         return indexRequest;
     }
