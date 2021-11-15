@@ -86,6 +86,6 @@ path.logs: /var/log/elasticsearch
 # Require explicit names when deleting indices:
 #
 #action.destructive_requires_name: true
-http.max_content_length: 1000mb
+http.max_content_length: 4000mb
 cluster.name: "docker-cluster"
 network.host: 0.0.0.0
